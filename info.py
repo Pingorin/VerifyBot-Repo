@@ -18,26 +18,26 @@ def is_enabled(value, default):
         return default
 
 # --- Main Bot Variables ---
-API_ID = int(environ.get('API_ID', '123456'))
-API_HASH = environ.get('API_HASH', 'abcdef...')
-BOT_TOKEN = environ.get('BOT_TOKEN', '123:ABC...')
+API_ID = int(environ.get('API_ID', '20638104'))
+API_HASH = environ.get('API_HASH', '6c884690ca85d39a4c5ad7c15b194e42')
+BOT_TOKEN = environ.get('BOT_TOKEN', '')
 
 # --- Admin and Log Channels ---
 ADMINS = [int(admin) if id_pattern.search(admin) else admin for admin in environ.get('ADMINS', '7245547751').split()]
 USERNAME = environ.get('USERNAME', 'https://t.me/ramSitaam') # Admin/Owner username
-LOG_CHANNEL = int(environ.get('LOG_CHANNEL', '-100...')) # Bot logs
-LOG_VR_CHANNEL = int(environ.get('LOG_VR_CHANNEL', '-100...')) # Verification logs
-LOG_API_CHANNEL = int(environ.get('LOG_API_CHANNEL', '-100...')) # Shortener API change logs
-SUPPORT_GROUP = int(environ.get('SUPPORT_GROUP', '-100...')) # Support group ID
-REQUEST_CHANNEL = int(environ.get('REQUEST_CHANNEL', '-100...')) # Request channel ID
+LOG_CHANNEL = int(environ.get('LOG_CHANNEL', '-1003163434752')) # Bot logs
+LOG_VR_CHANNEL = int(environ.get('LOG_VR_CHANNEL', '-1003179051423')) # Verification logs
+LOG_API_CHANNEL = int(environ.get('LOG_API_CHANNEL', '-1003173384552')) # Shortener API change logs
+SUPPORT_GROUP = int(environ.get('SUPPORT_GROUP', '-1003115990357')) # Support group ID
+REQUEST_CHANNEL = int(environ.get('REQUEST_CHANNEL', '-1003140956750')) # Request channel ID
 
 # --- Databases (All 4) ---
 DATABASE_URI = environ.get('DATABASE_URI', "")
 DATABASE_URI2 = environ.get('DATABASE_URI2', "")
 DATABASE_URI3 = environ.get('DATABASE_URI3', "")
 DATABASE_URI4 = environ.get('DATABASE_URI4', "")
-DATABASE_NAME = environ.get('DATABASE_NAME', "Cluster0")
-COLLECTION_NAME = environ.get('COLLECTION_NAME', 'Files')
+DATABASE_NAME = environ.get('DATABASE_NAME', "")
+COLLECTION_NAME = environ.get('COLLECTION_NAME', '')
 
 # --- File Indexing and Streaming ---
 CHANNELS = [int(ch) if id_pattern.search(ch) else ch for ch in environ.get('CHANNELS', '-100...').split()]
