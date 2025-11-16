@@ -3,14 +3,12 @@ import pytz
 from motor.motor_asyncio import AsyncIOMotorClient
 from info import (
     IS_VERIFY, LINK_MODE, FILE_CAPTION, TUTORIAL, DATABASE_NAME, DATABASE_URI, 
-    DATABASE_URI2, IMDB, IMDB_TEMPLATE, PROTECT_CONTENT, AUTO_DELETE, SPELL_CHECK, 
+    IMDB, IMDB_TEMPLATE, PROTECT_CONTENT, AUTO_DELETE, SPELL_CHECK, 
     AUTO_FILTER, LOG_VR_CHANNEL, 
     SHORTENER_WEBSITE, SHORTENER_API, 
     SHORTENER_WEBSITE2, SHORTENER_API2, 
-    SHORTENER_WEBSITE3, SHORTENER_API3, # <-- Naya V3 import
-    TWO_VERIFY_GAP, # Default Gap 1
-    THIRD_VERIFY_GAP, # <-- Naya Gap 2 import
-    DEFAULT_VERIFY_DURATION
+    SHORTENER_WEBSITE3, SHORTENER_API3,
+    TWO_VERIFY_GAP, THIRD_VERIFY_GAP, DEFAULT_VERIFY_DURATION
 )
 
 client = AsyncIOMotorClient(DATABASE_URI)
@@ -29,7 +27,7 @@ class Database:
             'api': SHORTENER_API,
             'shortner_two': SHORTENER_WEBSITE2, # V2
             'api_two': SHORTENER_API2,
-            'shortner_three': SHORTENER_WEBSITE3, # <-- Naya V3
+            'shortner_three': SHORTENER_WEBSITE3, # V3
             'api_three': SHORTENER_API3,
             'log': LOG_VR_CHANNEL,
             'imdb': IMDB,
@@ -37,7 +35,7 @@ class Database:
             'is_verify': IS_VERIFY, 
             'verify_time': DEFAULT_VERIFY_DURATION, # Full access (V3 ke baad)
             'verify_gap_1': TWO_VERIFY_GAP, # Gap 1 (V1 ke baad)
-            'verify_gap_2': THIRD_VERIFY_GAP # <-- Naya Gap 2 (V2 ke baad)
+            'verify_gap_2': THIRD_VERIFY_GAP # Gap 2 (V2 ke baad)
     }
     
     def __init__(self):
@@ -49,17 +47,13 @@ class Database:
         self.req = mydb.requests
         self.ref_links = mydb.referral_links
         self.referrals = mydb.referrals
-        
         self.join_requests = mydb.join_requests
 
     def new_user(self, id, name):
         return dict(
             id = id,
             name = name,
-            ban_status=dict(
-                is_banned=False,
-                ban_reason=""
-            ),
+            ban_status=dict(is_banned=False, ban_reason=""),
             referral_count=0
         )
 
@@ -69,14 +63,10 @@ class Database:
         if chat:
             chat_settings = chat.get('settings')
             if chat_settings:
-                # Purani settings ko naye defaults ke saath merge karo
                 settings.update(chat_settings)
-        
-        # Ensure all keys exist, agar user ki settings purani hai
+        # Ensure all default keys exist
         for key, value in self.default.items():
-            if key not in settings:
-                settings[key] = value
-                
+            settings.setdefault(key, value)
         return settings
 
     async def add_join_request(self, user_id, chat_id):
@@ -87,14 +77,10 @@ class Database:
         )
 
     async def is_join_request_pending(self, user_id, chat_id):
-        return bool(await self.join_requests.find_one(
-            {'user_id': user_id, 'chat_id': chat_id}
-        ))
+        return bool(await self.join_requests.find_one({'user_id': user_id, 'chat_id': chat_id}))
 
     async def remove_join_request(self, user_id, chat_id):
-        await self.join_requests.delete_one(
-            {'user_id': user_id, 'chat_id': chat_id}
-        )
+        await self.join_requests.delete_one({'user_id': user_id, 'chat_id': chat_id})
     
     async def clear_all_join_requests(self):
         await self.join_requests.delete_many({})
@@ -106,10 +92,7 @@ class Database:
         return dict(
             id = id,
             title = title,
-            chat_status=dict(
-                is_disabled=False,
-                reason=""
-            )
+            chat_status=dict(is_disabled=False, reason="")
         )
     
     async def add_user(self, id, name):
@@ -121,8 +104,7 @@ class Database:
         return bool(user)
     
     async def total_users_count(self):
-        count = await self.col.count_documents({})
-        return count
+        return await self.col.count_documents({})
     
     async def get_all_users(self):
         return self.col.find({})
@@ -141,16 +123,11 @@ class Database:
         return b_users, b_chats
     
     async def increment_referral_count(self, user_id):
-        await self.col.update_one(
-            {'id': int(user_id)},
-            {'$inc': {'referral_count': 1}}
-        )
+        await self.col.update_one({'id': int(user_id)}, {'$inc': {'referral_count': 1}})
 
     async def get_referral_count(self, user_id):
         user = await self.col.find_one({'id': int(user_id)})
-        if user:
-            return user.get('referral_count', 0)
-        return 0
+        return user.get('referral_count', 0) if user else 0
     
     async def add_chat(self, chat, title):
         chat = self.new_group(chat, title)
@@ -164,8 +141,7 @@ class Database:
         await self.grp.update_one({'id': int(id)}, {'$set': {'settings': settings}})   
     
     async def total_chat_count(self):
-        count = await self.grp.count_documents({})
-        return count
+        return await self.grp.count_documents({})
     
     async def get_all_chats(self):
         return self.grp.find({})
@@ -177,22 +153,20 @@ class Database:
         user_id = int(user_id)
         user = await self.misc.find_one({"user_id": user_id})
         ist_timezone = pytz.timezone('Asia/Kolkata')
+        old_time = datetime.datetime(2019, 5, 17, 0, 0, 0, tzinfo=ist_timezone)
         if not user:
-            old_time = datetime.datetime(2019, 5, 17, 0, 0, 0, tzinfo=ist_timezone)
             res = {
                 "user_id": user_id,
                 "last_verified": old_time, # V1
                 "second_time_verified": old_time, # V2
-                "third_time_verified": old_time, # <-- Naya V3 timestamp
+                "third_time_verified": old_time, # V3
             }
             await self.misc.insert_one(res)
             return res
-        # Ensure 'third_time_verified' exists for old users
-        if 'third_time_verified' not in user:
-            old_time = datetime.datetime(2019, 5, 17, 0, 0, 0, tzinfo=ist_timezone)
-            await self.update_notcopy_user(user_id, {'third_time_verified': old_time})
-            user['third_time_verified'] = old_time
-            
+        # Ensure all keys exist for old users
+        user.setdefault('last_verified', old_time)
+        user.setdefault('second_time_verified', old_time)
+        user.setdefault('third_time_verified', old_time)
         return user
 
     async def update_notcopy_user(self, user_id, value:dict):
@@ -224,8 +198,7 @@ class Database:
         user_data = await self.get_user(user_id)
         if user_data:
             expiry_time = user_data.get("expiry_time")
-            if expiry_time is None:
-                return False
+            if expiry_time is None: return False
             elif isinstance(expiry_time, datetime.datetime) and datetime.datetime.now() <= expiry_time:
                 return True
             else:
@@ -248,9 +221,7 @@ class Database:
         return expired_users
 
     async def remove_premium_access(self, user_id):
-        return await self.update_one(
-            {"id": user_id}, {"$set": {"expiry_time": None}}
-        )
+        return await self.update_one({"id": user_id}, {"$set": {"expiry_time": None}})
 
     async def get_user_data(self, user_id):
         user = await self.col.find_one({'id': int(user_id)})
@@ -266,29 +237,15 @@ class Database:
         return await self.ref_links.find_one({'_id': link})
 
     async def update_referral_link(self, user_id, link, chat_id):
-        await self.ref_links.insert_one({
-            '_id': link, 
-            'referrer_id': user_id, 
-            'chat_id': chat_id
-        })
+        await self.ref_links.insert_one({'_id': link, 'referrer_id': user_id, 'chat_id': chat_id})
 
     async def get_referral_link(self, user_id, chat_id):
-        return await self.ref_links.find_one({
-            'referrer_id': user_id, 
-            'chat_id': chat_id
-        })
+        return await self.ref_links.find_one({'referrer_id': user_id, 'chat_id': chat_id})
     
     async def log_referral(self, new_user_id, referrer_id, chat_id):
-        await self.referrals.insert_one({
-            'user_id': new_user_id,
-            'referrer_id': referrer_id,
-            'chat_id': chat_id
-        })
+        await self.referrals.insert_one({'user_id': new_user_id, 'referrer_id': referrer_id, 'chat_id': chat_id})
 
     async def has_been_referred_in_group(self, new_user_id, chat_id):
-        return bool(await self.referrals.find_one({
-            'user_id': new_user_id,
-            'chat_id': chat_id
-        }))
+        return bool(await self.referrals.find_one({'user_id': new_user_id, 'chat_id': chat_id}))
 
 db = Database()
