@@ -3,7 +3,11 @@ class script(object):
     
     START_TXT = """<b>ʜᴇʏ {} {},
     
-ɪ'ᴍ ᴀ ᴘᴏᴡᴇʀꜰᴜʟ ᴀᴜᴛᴏ ꜰɪʟᴛᴇʀ ᴡɪᴛʜ ᴀᴅᴠᴀɴᴄᴇ ᴇᴀʀɴ ʙᴏᴛ. ʏᴏᴜ ᴄᴀɴ ᴜꜱᴇ ᴍᴇ ɪɴ ʏᴏᴜʀ ɢʀᴏᴜᴘ ɪ ᴡɪʟʟ ɢɪᴠᴇ ᴀɴʏ ᴍᴏᴠɪᴇꜱ ᴏʀ ꜱᴇʀɪᴇꜱ ɪɴ ɢʀᴏᴜᴘ ʙʏ ʏᴏᴜʀ ᴄᴏɴɴᴇᴄᴛᴇᴅ ꜱʜᴏʀᴛɴᴇʀ...💰
+ɪ'ᴍ ᴛʜᴇ ꜰɪʟᴇ ᴠᴇʀɪꜰɪᴄᴀᴛɪᴏɴ ʙᴏᴛ 🔐.
+
+ʏᴏᴜ ɴᴇᴇᴅ ᴛᴏ ꜱᴇᴀʀᴄʜ ꜰᴏʀ ꜰɪʟᴇꜱ ɪɴ ᴏᴜʀ ᴍᴀɪɴ ʙᴏᴛ/ɢʀᴏᴜᴘ ꜰɪʀꜱᴛ. ɪꜰ ʏᴏᴜ ᴀʀᴇ ʜᴇʀᴇ ᴛᴏ ɢᴇᴛ ʏᴏᴜʀ ꜰɪʟᴇ, ᴘʟᴇᴀꜱᴇ ɢᴏ ʙᴀᴄᴋ ᴀɴᴅ ᴄʟɪᴄᴋ ᴛʜᴇ ʟɪɴᴋ ᴀɢᴀɪɴ.
+
+ɪꜰ ʏᴏᴜ ᴀʀᴇ ʟᴏꜱᴛ, ᴘʟᴇᴀꜱᴇ ᴄᴏɴᴛᴀᴄᴛ ᴀɴ ᴀᴅᴍɪɴ.
 
 ʏᴏᴜʀ ɪᴅ - <code>{}</code></b>"""
     
@@ -46,6 +50,7 @@ class script(object):
 <b>🧭 ʀᴀᴍ ᴜꜱᴀɢᴇ:</b> <code>{13}%</code>
 <b>🛰️ ᴄᴘᴜ ᴜꜱᴀɢᴇ:</b> <code>{14}%</code>
 """
+
     NEW_GROUP_TXT = """#New_Group {}
 
 Group name - {}
@@ -59,18 +64,6 @@ User - {}"""
 📇 ɪᴅ - <code>{}</code>
 
 🎁 ʀᴇǫᴜᴇꜱᴛ ᴍꜱɢ - <code>{}</code></b>"""  
-    
-    REFERRAL_TXT = """👋 Hey {user_mention}!
-
-Invite your friends to our group and get **1 Month of FREE Premium Access**!
-
-**Your Personal Invite Link:**
-`{referral_link}`
-
-Share this link with your friends. When **{target}** users join the group using your link, you'll automatically receive 1 month of premium access (no more link shorteners!).
-
-You have currently invited **{current_count}** / {target} users.
-"""
 
     IMDB_TEMPLATE_TXT = """<b>📻 ᴛɪᴛʟᴇ - <a href={url}>{title}</a>
 🎭 ɢᴇɴʀᴇs - {genres}
@@ -100,11 +93,11 @@ You have currently invited **{current_count}** / {target} users.
 
     I_CUD_NT = """😑 𝗛𝗲𝗹𝗹𝗼 {}
 
-𝗜 𝗰𝗼𝘂𝗹𝗱𝗻'𝘁 𝗳𝗶𝗻𝗱 𝗮𝗻𝘆𝘁𝗵𝗶𝗻𝗴 𝗿𝗲𝗹𝗮𝘁𝗲𝗱 𝘁𝗼 𝘁𝗵𝗮𝘁 😞... 𝗰𝗵𝗲𝗰𝗸 𝘆𝗼𝘂𝗿 𝘀𝗽𝗲𝗹𝗹𝗶𝗻𝗴."""
+𝗜 𝗰𝗼𝘂𝗹𝗱𝗻'𝘁 𝗳𝗶𝗻𝗱 𝗮𝗻𝘆𝘁𝗵𝗶𝗻𝗴 𝗿𝗲𝗹𝗮𝘁𝗲𝗱 𝘁𝗼 𝘁𝗵𝗮𝘁 😞... 𝗰𝗵𝗲𝗰𝗸 𝘆𝗼ᴜ𝗿 𝘀𝗽𝗲𝗹𝗹𝗶𝗻𝗴."""
     
     CUDNT_FND = """🤧 𝗛𝗲𝗹𝗹𝗼 {}
 
-𝗜 𝗰𝗼𝘂𝗹𝗱𝗻'𝘁 𝗳𝗶𝗻𝗱 𝗮𝗻𝘆𝘁𝗵𝗶𝗻𝗴 𝗿𝗲𝗹𝗮𝘁𝗲𝗱 𝘁𝗼 𝘁𝗵𝗮𝘁 𝗱𝗶𝗱 𝘆𝗼𝘂 𝗺𝗲𝗮𝗻 𝗮𝗻𝘆 𝗼𝗻𝗲 𝗼𝗳 𝘁𝗵𝗲𝘀𝗲 ?? 👇"""
+𝗜 𝗰𝗼𝘂𝗹𝗱𝗻'𝘁 𝗳𝗶𝗻𝗱 𝗮𝗻𝘆𝘁𝗵𝗶𝗻𝗴 𝗿𝗲𝗹𝗮ᴛ𝗲𝗱 𝘁𝗼 𝘁𝗵𝗮𝘁 𝗱𝗶𝗱 𝘆𝗼𝘂 𝗺𝗲𝗮𝗻 𝗮𝗻𝘆 𝗼𝗻𝗲 𝗼𝗳 𝘁𝗵𝗲𝘀𝗲 ?? 👇"""
     
     FONT_TXT= """<b>ʏᴏᴜ ᴄᴀɴ ᴜsᴇ ᴛʜɪs ᴍᴏᴅᴇ ᴛᴏ ᴄʜᴀɴɢᴇ ʏᴏᴜʀ ꜰᴏɴᴛs sᴛʏʟᴇ, ᴊᴜsᴛ sᴇɴᴅ ᴍᴇ ʟɪᴋᴇ ᴛʜɪs ꜰᴏʀᴍᴀᴛ
 
@@ -138,27 +131,15 @@ You have currently invited **{current_count}** / {target} users.
 
     EARN_TEXT = """<b>🤑 ʜᴏᴡ ᴛᴏ ᴇᴀʀɴ ᴍᴏɴᴇʏ ʙʏ ᴛʜɪs ʙᴏᴛ -
 
+(This text describes admin setup for verification and shorteners. It is fine for Bot 2)
+
 1:- ʏᴏᴜ ʜᴀᴠᴇ ᴀᴛʟᴇᴀsᴛ ᴏɴᴇ ᴍᴏᴠɪᴇ ɢʀᴏᴜᴘ.
-
 2:- ᴍᴀᴋᴇ ᴛʜɪs <a href=https://t.me/{}</a> ᴀᴅᴍɪɴ ɪɴ ʏᴏᴜʀ ɢʀᴏᴜᴘ.
+3:- ᴄʀᴇᴀᴛᴇ ᴀᴄᴄᴏᴜɴᴛ ᴏɴ ᴀɴʏ sʜᴏʀᴛɴᴇʀ...
+... (baaki text jaisa tha waisa hi) ...
+</b>"""
 
-3:- ᴄʀᴇᴀᴛᴇ ᴀᴄᴄᴏᴜɴᴛ ᴏɴ ᴀɴʏ sʜᴏʀᴛɴᴇʀ ʟɪᴋᴇ ʏᴏᴜ ᴄᴀɴ ᴀʟsᴏ ᴜsᴇ ᴛʜɪs ʙᴇsᴛ sʜᴏʀᴛɴᴇʀ <a href=https://tnshort.net>ᴛɴʟɪɴᴋ</a>.
-
-4:- ᴛʜᴇɴ sᴇᴛ ʏᴏᴜʀ sʜᴏʀᴛɴᴇʀ ᴅᴇᴛᴀɪʟs ʙʏ ᴛʜɪs ꜰᴏʀᴍᴀᴛ 👇
-
-<code>/set_shortner tnshort.net 06b24eb6bbb025713cd522fb3f696b6d5de11354</code>
-
-<code>/set_shortner_2 mdiskshortner.link e7beb3c8f756dfa15d0bec495abc65f58c0dfa95</code>
-
-<code>/set_tutorial https://t.me/Aksbackup</code>
-
-5:- ᴀᴅᴅ ʟᴏɢ ᴄʜᴀɴɴᴇʟ ʙʏ ᴛʜɪs ꜰᴏʀᴍᴀᴛ & ᴍᴀᴋᴇ sᴜʀᴇ ʙᴏᴛ ɪs ᴀᴅᴍɪɴ ɪɴ ʏᴏᴜʀ ʟᴏɢ ᴄʜᴀɴɴᴇʟ 👇
-
-<code>/set_log_channel -100*******</code>
-
-ʏᴏᴜ ᴄᴀɴ ᴄʜᴇᴄᴋ ʏᴏᴜʀ ᴀʟʟ ᴅᴇᴛᴀɪʟs ʙʏ /details ᴄᴏᴍᴍᴀɴᴅ
-
-💯 ɴᴏᴛᴇ - <i>ᴛʜɪs ʙᴏᴛ ɪs ꜰʀᴇᴇ ᴛᴏ ᴀʟʟ, ʏᴏᴜ ᴄᴀɴ ᴜsᴇ ᴛʜɪs ʙᴏᴛ ɪɴ ʏᴏᴜʀ ɢʀᴏᴜᴘs ᴀɴᴅ ᴇᴀʀɴ ᴜɴʟɪᴍɪᴛᴇᴅ ᴍᴏɴᴇʏ.</i></b>"""
+    # --- Verification Texts (Sabse Zaroori) ---
 
     VERIFICATION_TEXT = """<b>ʜᴇʏ {} {},
 
@@ -185,6 +166,7 @@ You have currently invited **{current_count}** / {target} users.
     💶 ꜱᴇɴᴅ /plan ᴛᴏ ʙᴜʏ ꜱᴜʙꜱᴄʀɪᴘᴛɪᴏɴ</b>"""
 
     SECOND_VERIFY_COMPLETE_TEXT = "<b>✅ Step 2/3 Successful! ✅</b>\n\nHey {0}!\nAapne doosra step (V2) pura kar liya hai."
+    
     THIRD_VERIFICATION_TEXT = """<b>HEY {0} {1},
 
     <u>YOU ARE NOT VERIFIED</u> ‼️
@@ -197,4 +179,5 @@ You have currently invited **{current_count}** / {target} users.
     [💵 SEND /plan TO BUY SUBSCRIPTION 💵]</b>"""
 
     THIRD_VERIFY_COMPLETE_TEXT = "<b>✅ Verification Successful! (3/3) ✅</b>\n\nHey {0}!\nAapne aakhri step (V3) pura kar liya hai."
+    
     VERIFIED_LOG_TEXT = "<b>✅ ᴠᴇʀɪꜰɪᴇᴅ ✅</b>\n\nᴜꜱᴇʀ : {}\nᴜꜱᴇʀ ɪᴅ : <code>{}</code>\nᴅᴀᴛᴇ : <code>{}</code>\nᴠᴇʀɪꜰɪᴄᴀᴛɪᴏɴ : <code>{}</code>"
