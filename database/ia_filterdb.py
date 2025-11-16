@@ -7,7 +7,6 @@ from pymongo.errors import DuplicateKeyError
 from umongo import Instance, Document, fields
 from motor.motor_asyncio import AsyncIOMotorClient
 from marshmallow.exceptions import ValidationError
-# --- FIX: Chaaron database URI import karein ---
 from info import (
     DATABASE_URI, DATABASE_URI2, DATABASE_URI3, DATABASE_URI4, 
     DATABASE_NAME, COLLECTION_NAME, MAX_BTN, QUALITIES
@@ -30,13 +29,12 @@ client_third = AsyncIOMotorClient(DATABASE_URI3)
 mydb_third = client_third[DATABASE_NAME]
 instance_third = Instance.from_db(mydb_third)
 
-# --- NAYA: Connection 4 (Fourth) ---
+# --- Connection 4 (Fourth) ---
 client_fourth = AsyncIOMotorClient(DATABASE_URI4)
 mydb_fourth = client_fourth[DATABASE_NAME]
 instance_fourth = Instance.from_db(mydb_fourth)
 
 
-# --- Primary DB ke liye Media class ---
 @instance_primary.register
 class MediaPrimary(Document):
     file_id = fields.StrField(attribute='_id')
@@ -46,12 +44,10 @@ class MediaPrimary(Document):
     mime_type = fields.StrField(allow_none=True)
     caption = fields.StrField(allow_none=True)
     file_type = fields.StrField(allow_none=True)
-
     class Meta:
         indexes = ('$file_name', )
         collection_name = f"{COLLECTION_NAME}_PRIMARY" 
 
-# --- Secondary DB ke liye Media class ---
 @instance_secondary.register
 class MediaSecondary(Document):
     file_id = fields.StrField(attribute='_id')
@@ -61,12 +57,10 @@ class MediaSecondary(Document):
     mime_type = fields.StrField(allow_none=True)
     caption = fields.StrField(allow_none=True)
     file_type = fields.StrField(allow_none=True)
-
     class Meta:
         indexes = ('$file_name', )
-        collection_name = COLLECTION_NAME # Default collection
+        collection_name = COLLECTION_NAME # Default
 
-# --- Third DB ke liye Media class ---
 @instance_third.register
 class MediaThird(Document):
     file_id = fields.StrField(attribute='_id')
@@ -76,12 +70,10 @@ class MediaThird(Document):
     mime_type = fields.StrField(allow_none=True)
     caption = fields.StrField(allow_none=True)
     file_type = fields.StrField(allow_none=True)
-
     class Meta:
         indexes = ('$file_name', )
         collection_name = f"{COLLECTION_NAME}_THIRD" 
 
-# --- NAYA: Fourth DB ke liye Media class ---
 @instance_fourth.register
 class MediaFourth(Document):
     file_id = fields.StrField(attribute='_id')
@@ -91,28 +83,18 @@ class MediaFourth(Document):
     mime_type = fields.StrField(allow_none=True)
     caption = fields.StrField(allow_none=True)
     file_type = fields.StrField(allow_none=True)
-
     class Meta:
         indexes = ('$file_name', )
         collection_name = f"{COLLECTION_NAME}_FOURTH" 
 
-
-# --- Compatibility Fix ---
-Media = MediaSecondary
-mydb = mydb_secondary 
-# --- End Compatibility Fix ---
-
+Media = MediaSecondary # Compatibility
+mydb = mydb_secondary # Compatibility
 
 async def get_files_db_size():
-    try:
-        # Yeh abhi bhi sirf secondary DB ka size dikhayega (jaisa pehle tha)
-        return (await mydb_secondary.command("dbstats"))['dataSize']
-    except Exception:
-        return 0 
+    try: return (await mydb_secondary.command("dbstats"))['dataSize']
+    except: return 0 
 
-# --- NAYA: /stats command ke liye ---
 async def get_all_files_db_stats():
-    """Returns stats (file count, db size) for all 4 file databases."""
     stats = {}
     all_dbs = {
         'db1': (MediaPrimary, mydb_primary),
@@ -120,7 +102,6 @@ async def get_all_files_db_stats():
         'db3': (MediaThird, mydb_third),
         'db4': (MediaFourth, mydb_fourth)
     }
-    
     for db_key, (MediaClass, mydb_instance) in all_dbs.items():
         try:
             count = await MediaClass.count_documents()
@@ -131,53 +112,34 @@ async def get_all_files_db_stats():
             logger.error(f"{db_key} Stats Error: {e}")
             stats[f'{db_key}_files'] = "N/A"
             stats[f'{db_key}_size'] = 0
-            
     return stats
-# --- Stats function khatam ---
 
-# --- NAYA SAVE_FILE LOGIC (4-DB CHECK KE SAATH) ---
 async def save_file(media, db_choice='secondary'):
-    """Save file in the chosen database"""
-
     file_id, file_ref = unpack_new_file_id(media.file_id)
     
-    # Logic: Save karne se pehle check karo
     try:
         if db_choice == 'fourth':
-            # Agar DB 4 mein save kar rahe hain, toh 1, 2, aur 3 mein check karo
             if await MediaPrimary.find_one({'_id': file_id}) or \
                await MediaSecondary.find_one({'_id': file_id}) or \
                await MediaThird.find_one({'_id': file_id}):
-                logger.warning(f'{getattr(media, "file_name", "NO_FILE")} pehle se DB 1, 2 ya 3 mein hai. DB 4 mein skip kar raha hoon.')
+                logger.warning(f'{getattr(media, "file_name", "NO_FILE")} already in DB 1/2/3. Skipping in DB 4.')
                 return 'dup'
-                
         elif db_choice == 'third':
-            # Agar DB 3 mein save kar rahe hain, toh 1 aur 2 mein check karo
             if await MediaPrimary.find_one({'_id': file_id}) or await MediaSecondary.find_one({'_id': file_id}):
-                logger.warning(f'{getattr(media, "file_name", "NO_FILE")} pehle se DB 1 ya 2 mein hai. DB 3 mein skip kar raha hoon.')
+                logger.warning(f'{getattr(media, "file_name", "NO_FILE")} already in DB 1/2. Skipping in DB 3.')
                 return 'dup'
-        
         elif db_choice == 'secondary':
-            # Agar DB 2 mein save kar rahe hain, toh 1 mein check karo
             if await MediaPrimary.find_one({'_id': file_id}):
-                logger.warning(f'{getattr(media, "file_name", "NO_FILE")} pehle se DB 1 mein hai. DB 2 mein skip kar raha hoon.')
+                logger.warning(f'{getattr(media, "file_name", "NO_FILE")} already in DB 1. Skipping in DB 2.')
                 return 'dup' 
-        
-        # db_choice == 'primary' ke liye koi check zaroori nahi hai
-            
     except Exception as e:
-        logger.error(f"Duplicate check karte waqt error: {e}")
+        logger.error(f"Duplicate check error: {e}")
         pass 
 
-    # Decide karo kaunsi class use karni hai
-    if db_choice == 'primary':
-        MediaClass = MediaPrimary
-    elif db_choice == 'third':
-        MediaClass = MediaThird
-    elif db_choice == 'fourth':
-        MediaClass = MediaFourth
-    else: # 'secondary' ya koi default
-        MediaClass = MediaSecondary
+    if db_choice == 'primary': MediaClass = MediaPrimary
+    elif db_choice == 'third': MediaClass = MediaThird
+    elif db_choice == 'fourth': MediaClass = MediaFourth
+    else: MediaClass = MediaSecondary
         
     file_name = re.sub(r"(_|\-|\.|\+)", " ", str(media.file_name))
     
@@ -192,32 +154,26 @@ async def save_file(media, db_choice='secondary'):
             file_type=media.mime_type.split('/')[0]
         )
     except ValidationError:
-        logger.error('File save karte waqt Validation Error')
+        logger.error('Validation Error saving file')
         return 'err'
     else:
         try:
             await file.commit()
         except DuplicateKeyError:      
-            logger.warning(f'{getattr(media, "file_name", "NO_FILE")} pehle se {db_choice} database mein hai') 
+            logger.warning(f'{getattr(media, "file_name", "NO_FILE")} already in {db_choice} database') 
             return 'dup'
         else:
-            logger.info(f'{getattr(media, "file_name", "NO_FILE")} ko {db_choice} database mein save kar diya gaya')
+            logger.info(f'{getattr(media, "file_name", "NO_FILE")} saved to {db_choice} database')
             return 'suc'
 
-# --- NAYA SEARCH FIX (Chaaron DB mein + Caption Search) ---
 async def get_search_results(query, max_results=MAX_BTN, offset=0, lang=None, quality=None, year=None):
     query = query.strip()
-    if not query:
-        raw_pattern = '.'
-    elif ' ' not in query:
-        raw_pattern = r'(\b|[\.\+\-_])' + query + r'(\b|[\.\+\-_])'
-    else:
-        raw_pattern = query.replace(' ', r'.*[\s\.\+\-_]') 
+    if not query: raw_pattern = '.'
+    elif ' ' not in query: raw_pattern = r'(\b|[\.\+\-_])' + query + r'(\b|[\.\+\-_])'
+    else: raw_pattern = query.replace(' ', r'.*[\s\.\+\-_]') 
     
-    try:
-        simple_regex = re.compile(raw_pattern, flags=re.IGNORECASE)
-    except:
-        simple_regex = query
+    try: simple_regex = re.compile(raw_pattern, flags=re.IGNORECASE)
+    except: simple_regex = query
         
     file_name_regex = simple_regex
     
@@ -228,76 +184,40 @@ async def get_search_results(query, max_results=MAX_BTN, offset=0, lang=None, qu
     elif year:
         file_name_regex = re.compile(f"(?=.*{raw_pattern})(?=.*{re.escape(year)})", flags=re.IGNORECASE)
 
-    filter = {
-        '$or': [
-            {'file_name': file_name_regex},
-            {'caption': simple_regex}
-        ]
-    }
+    filter = {'$or': [{'file_name': file_name_regex}, {'caption': simple_regex}]}
 
     files_primary = files_secondary = files_third = files_fourth = []
-
-    try:
-        files_primary = await MediaPrimary.find(filter).sort('$natural', -1).to_list(length=None)
-    except Exception as e:
-        logger.error(f"Primary DB search error: {e}")
-        
-    try:
-        files_secondary = await MediaSecondary.find(filter).sort('$natural', -1).to_list(length=None)
-    except Exception as e:
-        logger.error(f"Secondary DB search error: {e}")
-        
-    try:
-        files_third = await MediaThird.find(filter).sort('$natural', -1).to_list(length=None)
-    except Exception as e:
-        logger.error(f"Third DB search error: {e}")
-        
-    try:
-        files_fourth = await MediaFourth.find(filter).sort('$natural', -1).to_list(length=None)
-    except Exception as e:
-        logger.error(f"Fourth DB search error: {e}")
+    try: files_primary = await MediaPrimary.find(filter).sort('$natural', -1).to_list(length=None)
+    except Exception as e: logger.error(f"Primary DB search error: {e}")
+    try: files_secondary = await MediaSecondary.find(filter).sort('$natural', -1).to_list(length=None)
+    except Exception as e: logger.error(f"Secondary DB search error: {e}")
+    try: files_third = await MediaThird.find(filter).sort('$natural', -1).to_list(length=None)
+    except Exception as e: logger.error(f"Third DB search error: {e}")
+    try: files_fourth = await MediaFourth.find(filter).sort('$natural', -1).to_list(length=None)
+    except Exception as e: logger.error(f"Fourth DB search error: {e}")
 
     all_files = files_primary + files_secondary + files_third + files_fourth
     
     if all_files:
-        unique_files = {}
-        for file in all_files:
-            if file.file_id not in unique_files:
-                unique_files[file.file_id] = file
+        unique_files = {file.file_id: file for file in all_files} # Fast duplicate removal
         all_files = list(unique_files.values())
 
     total_results = len(all_files)
-
     files_to_send = all_files[offset : offset + max_results]
-    
     next_offset = offset + len(files_to_send)
-    if next_offset >= total_results:
-        next_offset = ''
+    if next_offset >= total_results: next_offset = ''
         
     return files_to_send, next_offset, total_results
-    # --- SEARCH FIX KHATAM ---
     
 async def get_available_qualities(query):
     query = query.strip()
-    if not query:
-        raw_pattern = '.'
-    elif ' ' not in query:
-        raw_pattern = r'(\b|[\.\+\-_])' + query + r'(\b|[\.\+\-_])'
-    else:
-        raw_pattern = query.replace(' ', r'.*[\s\.\+\-_]')
-    
-    try:
-        regex = re.compile(raw_pattern, flags=re.IGNORECASE)
-    except:
-        regex = query
+    if not query: raw_pattern = '.'
+    elif ' ' not in query: raw_pattern = r'(\b|[\.\+\-_])' + query + r'(\b|[\.\+\-_])'
+    else: raw_pattern = query.replace(' ', r'.*[\s\.\+\-_]')
+    try: regex = re.compile(raw_pattern, flags=re.IGNORECASE)
+    except: regex = query
 
-    filter = {
-        '$or': [
-            {'file_name': regex},
-            {'caption': regex}
-        ]
-    }
-    
+    filter = {'$or': [{'file_name': regex}, {'caption': regex}]}
     available_qualities = set()
     
     async def check_qualities_in_db(db_class, db_name):
@@ -309,155 +229,85 @@ async def get_available_qualities(query):
                     if re.search(r'\b' + re.escape(quality.lower()) + r'\b', text_to_check) or \
                        (quality.endswith('p') and quality.lower() in text_to_check):
                         available_qualities.add(quality)
-        except Exception as e:
-            logger.error(f"{db_name} quality check error: {e}")
+        except Exception as e: logger.error(f"{db_name} quality check error: {e}")
 
-    await check_qualities_in_db(MediaPrimary, "Primary DB")
-    await check_qualities_in_db(MediaSecondary, "Secondary DB")
-    await check_qualities_in_db(MediaThird, "Third DB")
-    await check_qualities_in_db(MediaFourth, "Fourth DB")
-                
+    await asyncio.gather(
+        check_qualities_in_db(MediaPrimary, "Primary DB"),
+        check_qualities_in_db(MediaSecondary, "Secondary DB"),
+        check_qualities_in_db(MediaThird, "Third DB"),
+        check_qualities_in_db(MediaFourth, "Fourth DB")
+    )
     return sorted(list(available_qualities), reverse=True) 
 
 async def get_available_years(query):
     YEAR_REGEX = re.compile(r'\b(19\d{2}|20\d{2})\b') 
-
     query = query.strip()
-    if not query:
-        raw_pattern = '.'
-    elif ' ' not in query:
-        raw_pattern = r'(\b|[\.\+\-_])' + query + r'(\b|[\.\+\-_])'
-    else:
-        raw_pattern = query.replace(' ', r'.*[\s\.\+\-_]')
-    
-    try:
-        regex = re.compile(raw_pattern, flags=re.IGNORECASE)
-    except:
-        regex = query
-
-    filter = {
-        '$or': [
-            {'file_name': regex},
-            {'caption': regex}
-        ]
-    }
-    
+    if not query: raw_pattern = '.'
+    elif ' ' not in query: raw_pattern = r'(\b|[\.\+\-_])' + query + r'(\b|[\.\+\-_])'
+    else: raw_pattern = query.replace(' ', r'.*[\s\.\+\-_]')
+    try: regex = re.compile(raw_pattern, flags=re.IGNORECASE)
+    except: regex = query
+    filter = {'$or': [{'file_name': regex}, {'caption': regex}]}
     available_years = set()
-
     async def check_years_in_db(db_class, db_name):
         try:
             cursor = db_class.find(filter).limit(200) 
             async for file in cursor:
                 text_to_check = file.file_name + " " + (file.caption or "")
                 matches = YEAR_REGEX.findall(text_to_check)
-                for year in matches:
-                    available_years.add(year)
-        except Exception as e:
-            logger.error(f"{db_name} year check error: {e}")
-
-    await check_years_in_db(MediaPrimary, "Primary DB")
-    await check_years_in_db(MediaSecondary, "Secondary DB")
-    await check_years_in_db(MediaThird, "Third DB")
-    await check_years_in_db(MediaFourth, "Fourth DB")
-                
+                for year in matches: available_years.add(year)
+        except Exception as e: logger.error(f"{db_name} year check error: {e}")
+    
+    await asyncio.gather(
+        check_years_in_db(MediaPrimary, "Primary DB"),
+        check_years_in_db(MediaSecondary, "Secondary DB"),
+        check_years_in_db(MediaThird, "Third DB"),
+        check_years_in_db(MediaFourth, "Fourth DB")
+    )
     return sorted(list(available_years), reverse=True) 
 
 async def get_bad_files(query, file_type=None, offset=0, filter=False):
     query = query.strip()
-    if not query:
-        raw_pattern = '.'
-    elif ' ' not in query:
-        raw_pattern = r'(\b|[\.\+\-_])' + query + r'(\b|[\.\+\-_])'
-    else:
-        raw_pattern = query.replace(' ', r'.*[\s\.\+\-_]')
-    try:
-        regex = re.compile(raw_pattern, flags=re.IGNORECASE)
-    except:
-        return [], 0 
+    if not query: raw_pattern = '.'
+    elif ' ' not in query: raw_pattern = r'(\b|[\.\+\-_])' + query + r'(\b|[\.\+\-_])'
+    else: raw_pattern = query.replace(' ', r'.*[\s\.\+\-_]')
+    try: regex = re.compile(raw_pattern, flags=re.IGNORECASE)
+    except: return [], 0 
         
-    base_filter = {
-        '$or': [
-            {'file_name': regex},
-            {'caption': regex}
-        ]
-    }
-    
+    base_filter = {'$or': [{'file_name': regex}, {'caption': regex}]}
     filter = {'$and': [base_filter, {'file_type': file_type}]} if file_type else base_filter
-    
     files = []
-    try:
-        files.extend(await MediaPrimary.find(filter).sort('$natural', -1).to_list(length=None))
-    except Exception as e:
-        logger.error(f"Primary DB bad_files error: {e}")
-        
-    try:
-        files.extend(await MediaSecondary.find(filter).sort('$natural', -1).to_list(length=None))
-    except Exception as e:
-        logger.error(f"Secondary DB bad_files error: {e}")
-        
-    try:
-        files.extend(await MediaThird.find(filter).sort('$natural', -1).to_list(length=None))
-    except Exception as e:
-        logger.error(f"Third DB bad_files error: {e}")
-        
-    try:
-        files.extend(await MediaFourth.find(filter).sort('$natural', -1).to_list(length=None))
-    except Exception as e:
-        logger.error(f"Fourth DB bad_files error: {e}")
+    try: files.extend(await MediaPrimary.find(filter).sort('$natural', -1).to_list(length=None))
+    except Exception as e: logger.error(f"Primary DB bad_files error: {e}")
+    try: files.extend(await MediaSecondary.find(filter).sort('$natural', -1).to_list(length=None))
+    except Exception as e: logger.error(f"Secondary DB bad_files error: {e}")
+    try: files.extend(await MediaThird.find(filter).sort('$natural', -1).to_list(length=None))
+    except Exception as e: logger.error(f"Third DB bad_files error: {e}")
+    try: files.extend(await MediaFourth.find(filter).sort('$natural', -1).to_list(length=None))
+    except Exception as e: logger.error(f"Fourth DB bad_files error: {e}")
 
     if files:
-        unique_files = {}
-        for file in files:
-            if file.file_id not in unique_files:
-                unique_files[file.file_id] = file
+        unique_files = {file.file_id: file for file in files}
         files = list(unique_files.values())
-        
     total_results = len(files)
     return files, total_results
     
 async def get_file_details(query):
     filter = {'file_id': query}
-    
-    try:
-        filedetails = await MediaSecondary.find(filter).to_list(length=1)
-        if filedetails:
-            return filedetails
-    except Exception as e:
-        logger.error(f"get_file_details Secondary DB error: {e}")
-
-    try:
-        filedetails = await MediaPrimary.find(filter).to_list(length=1)
-        if filedetails:
-            return filedetails
-    except Exception as e:
-        logger.error(f"get_file_details Primary DB error: {e}")
-        
-    try:
-        filedetails = await MediaThird.find(filter).to_list(length=1)
-        if filedetails:
-            return filedetails
-    except Exception as e:
-        logger.error(f"get_file_details Third DB error: {e}")
-
-    try:
-        filedetails = await MediaFourth.find(filter).to_list(length=1)
-        if filedetails:
-            return filedetails
-    except Exception as e:
-        logger.error(f"get_file_details Fourth DB error: {e}")
-        
+    for MediaClass in [MediaSecondary, MediaPrimary, MediaThird, MediaFourth]:
+        try:
+            filedetails = await MediaClass.find(filter).to_list(length=1)
+            if filedetails: return filedetails
+        except Exception as e:
+            logger.error(f"get_file_details error in {MediaClass.__name__}: {e}")
     return [] 
 
 def encode_file_id(s: bytes) -> str:
-    r = b""
-    n = 0
+    r, n = b"", 0
     for i in s + bytes([22]) + bytes([4]):
-        if i == 0:
-            n += 1
+        if i == 0: n += 1
         else:
-            if n:
-                r += b"\x00" + bytes([n])
-                n = 0
+            if n: r += b"\x00" + bytes([n]); n = 0
             r += bytes([i])
     return base64.urlsafe_b64encode(r).decode().rstrip("=")
 
@@ -466,14 +316,6 @@ def encode_file_ref(file_ref: bytes) -> str:
 
 def unpack_new_file_id(new_file_id):
     decoded = FileId.decode(new_file_id)
-    file_id = encode_file_id(
-        pack(
-            "<iiqq",
-            int(decoded.file_type),
-            decoded.dc_id,
-            decoded.media_id,
-            decoded.access_hash
-        )
-    )
+    file_id = encode_file_id(pack("<iiqq", int(decoded.file_type), decoded.dc_id, decoded.media_id, decoded.access_hash))
     file_ref = encode_file_ref(decoded.file_reference)
     return file_id, file_ref
