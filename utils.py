@@ -1,5 +1,5 @@
 import logging
-import urllib.parse  # <-- YEH IMPORT ZAROORI HAI
+import urllib.parse
 from pyrogram.errors import InputUserDeactivated, UserNotParticipant, FloodWait, UserIsBlocked, PeerIdInvalid
 # --- Sabhi 4 channels imported hain ---
 from info import (
@@ -18,7 +18,6 @@ import pytz
 import time
 import re
 import os 
-# from shortzy import Shortzy # (Unused import, hata diya gaya)
 from datetime import datetime, timedelta, timezone
 from typing import Any
 from database.users_chats_db import db
@@ -32,6 +31,7 @@ imdb = Cinemagoer()
  
 class temp(object):
     ME = None
+    START_TIME = time.time() # START_TIME ko yahaan define karein
     CURRENT=int(os.environ.get("SKIP", 2))
     CANCEL = False
     U_NAME = None
@@ -43,91 +43,57 @@ class temp(object):
     GROUPS_CANCEL = False    
     CHAT = {}
 
-# --- YAHAN SE AAPKA FSUB CODE SHURU HOTA HAI ---
-# (Yeh poora code block sahi hai)
-
+# --- FSub Logic ---
 async def _get_fsub_status(bot, user_id, channel_id):
-    """(Internal) Ek single 'Advanced' channel ka status check karta hai (API + DB)."""
     try:
         member = await bot.get_chat_member(channel_id, user_id)
-
         if member.status in [enums.ChatMemberStatus.MEMBER, enums.ChatMemberStatus.ADMINISTRATOR, enums.ChatMemberStatus.OWNER]:
             return "MEMBER"
         if member.status in [enums.ChatMemberStatus.LEFT, enums.ChatMemberStatus.BANNED]:
             return "NOT_JOINED"
         if member.status == enums.ChatMemberStatus.RESTRICTED:
             return "PENDING"
-
     except UserNotParticipant:
         if await db.is_join_request_pending(user_id, channel_id):
             return "PENDING"
         else:
             return "NOT_JOINED"
-            
     except Exception as e:
         logger.error(f"Advanced Fsub check error for {channel_id}: {e}")
         return "NOT_JOINED"
-    
-    return "NOT_JOINED" # Fallback
+    return "NOT_JOINED"
 
 async def _get_normal_fsub_status(bot, user_id, channel_id):
-    """(Internal) Ek single 'Normal' channel ka status (sirf member) check karta hai."""
     try:
         member = await bot.get_chat_member(channel_id, user_id)
-        
         if member.status in [enums.ChatMemberStatus.MEMBER, enums.ChatMemberStatus.ADMINISTRATOR, enums.ChatMemberStatus.OWNER]:
             return "MEMBER"
         else:
-            return "NOT_JOINED" # (Left, Banned, etc. sab 'not joined' hain)
-            
+            return "NOT_JOINED"
     except UserNotParticipant:
-        return "NOT_JOINED" # User member nahi hai
-            
+        return "NOT_JOINED"
     except Exception as e:
         logger.error(f"Normal Fsub check error for {channel_id}: {e}")
-        return "NOT_JOINED" # Safety fallback
+        return "NOT_JOINED"
 
 async def check_fsub_status(bot, user_id):
-    """
-    Pehle teen channels (FSub 1, 2, 3) ka status check karta hai.
-    Returns: (status1, status2, status3)
-    """
+    if not AUTH_CHANNEL: status_1 = "MEMBER"
+    else: status_1 = await _get_fsub_status(bot, user_id, AUTH_CHANNEL)
     
-    # Pehla channel (Advanced)
-    if not AUTH_CHANNEL:
-        status_1 = "MEMBER"
-    else:
-        status_1 = await _get_fsub_status(bot, user_id, AUTH_CHANNEL)
-    
-    # Doosra channel (Advanced)
-    if not AUTH_CHANNEL_2:
-        status_2 = "MEMBER"
-    else:
-        status_2 = await _get_fsub_status(bot, user_id, AUTH_CHANNEL_2)
+    if not AUTH_CHANNEL_2: status_2 = "MEMBER"
+    else: status_2 = await _get_fsub_status(bot, user_id, AUTH_CHANNEL_2)
         
-    # Teesra channel (Normal)
-    if not AUTH_CHANNEL_3:
-        status_3 = "MEMBER"
-    else:
-        status_3 = await _get_normal_fsub_status(bot, user_id, AUTH_CHANNEL_3)
+    if not AUTH_CHANNEL_3: status_3 = "MEMBER"
+    else: status_3 = await _get_normal_fsub_status(bot, user_id, AUTH_CHANNEL_3)
     
     return status_1, status_2, status_3
 
 async def check_fsub_4_status(bot, user_id):
-    """
-    Sirf chauthe (post-verify) channel ka status check karta hai.
-    Returns: "MEMBER", "PENDING", "NOT_JOINED"
-    """
-    if not AUTH_CHANNEL_4:
-        return "MEMBER" # Agar set nahi hai, toh maan lo joined hai
-    
-    # Chautha channel "Advanced" (request) type ka hai
+    if not AUTH_CHANNEL_4: return "MEMBER"
     return await _get_fsub_status(bot, user_id, AUTH_CHANNEL_4)
-# --- YAHAN FSUB LOGIC KHATAM HOTA HAI ---
 
-
+# --- IMDB Poster ---
 async def get_poster(query, bulk=False, id=False, file=None):
-    # (Yeh function poora waise hi rahega)
     if not id:
         query = (query.strip()).lower()
         title = query
@@ -142,38 +108,27 @@ async def get_poster(query, bulk=False, id=False, file=None):
         else:
             year = None
         movieid = imdb.search_movie(title.lower(), results=10)
-        if not movieid:
-            return None
+        if not movieid: return None
         if year:
             filtered=list(filter(lambda k: str(k.get('year')) == str(year), movieid))
-            if not filtered:
-                filtered = movieid
-        else:
-            filtered = movieid
+            if not filtered: filtered = movieid
+        else: filtered = movieid
         movieid=list(filter(lambda k: k.get('kind') in ['movie', 'tv series'], filtered))
-        if not movieid:
-            movieid = filtered
-        if bulk:
-            return movieid
+        if not movieid: movieid = filtered
+        if bulk: return movieid
         movieid = movieid[0].movieID
-    else:
-        movieid = query
+    else: movieid = query
+    
     movie = imdb.get_movie(movieid)
-    if movie.get("original air date"):
-        date = movie["original air date"]
-    elif movie.get("year"):
-        date = movie.get("year")
-    else:
-        date = "N/A"
+    if movie.get("original air date"): date = movie["original air date"]
+    elif movie.get("year"): date = movie.get("year")
+    else: date = "N/A"
     plot = ""
     if not LONG_IMDB_DESCRIPTION:
         plot = movie.get('plot')
-        if plot and len(plot) > 0:
-            plot = plot[0]
-    else:
-        plot = movie.get('plot outline')
-    if plot and len(plot) > 800:
-        plot = plot[0:800] + "..."
+        if plot and len(plot) > 0: plot = plot[0]
+    else: plot = movie.get('plot outline')
+    if plot and len(plot) > 800: plot = plot[0:800] + "..."
 
     return {
         'title': movie.get('title'),
@@ -205,8 +160,8 @@ async def get_poster(query, bulk=False, id=False, file=None):
         'url':f'https://www.imdb.com/title/tt{movieid}'
     }
 
+# --- Broadcast Helpers ---
 async def users_broadcast(user_id, message, is_pin):
-    # (Yeh function poora waise hi rahega)
     try:
         m=await message.copy(chat_id=user_id)
         if is_pin:
@@ -214,7 +169,7 @@ async def users_broadcast(user_id, message, is_pin):
         return True, "Success"
     except FloodWait as e:
         await asyncio.sleep(e.x)
-        return await users_broadcast(user_id, message)
+        return await users_broadcast(user_id, message, is_pin) # Recursive call
     except InputUserDeactivated:
         await db.delete_user(int(user_id))
         logging.info(f"{user_id}-Removed from Database, since deleted account.")
@@ -231,24 +186,21 @@ async def users_broadcast(user_id, message, is_pin):
         return False, "Error"
 
 async def groups_broadcast(chat_id, message, is_pin):
-    # (Yeh function poora waise hi rahega)
     try:
         m = await message.copy(chat_id=chat_id)
         if is_pin:
-            try:
-                await m.pin()
-            except:
-                pass
+            try: await m.pin()
+            except: pass
         return "Success"
     except FloodWait as e:
         await asyncio.sleep(e.x)
-        return await groups_broadcast(chat_id, message)
+        return await groups_broadcast(chat_id, message, is_pin) # Recursive call
     except Exception as e:
         await db.delete_chat(chat_id)
         return "Error"
 
+# --- Settings ---
 async def get_settings(group_id):
-    # (Yeh function poora waise hi rahega)
     settings = temp.SETTINGS.get(group_id)
     if not settings:
         settings = await db.get_settings(group_id)
@@ -256,41 +208,15 @@ async def get_settings(group_id):
     return settings
     
 async def save_group_settings(group_id, key, value):
-    # (Yeh function poora waise hi rahega)
     current = await get_settings(group_id)
     current.update({key: value})
     temp.SETTINGS.update({group_id: current})
     await db.update_settings(group_id, current)
     
-def get_size(size):
-    # (Yeh function poora waise hi rahega)
-    units = ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB"]
-    size = float(size)
-    i = 0
-    while size >= 1024.0 and i < len(units):
-        i += 1
-        size /= 1024.0
-    return "%.2f %s" % (size, units[i])
-
-def get_name(name):
-    # (Yeh function poora waise hi rahega)
-    regex = re.sub(r'@\w+', '', name)
-    return regex
-
-def list_to_str(k):
-    # (Yeh function poora waise hi rahega)
-    if not k:
-        return "N/A"
-    elif len(k) == 1:
-        return str(k[0])
-    else:
-        return ', '.join(f'{elem}, ' for elem in k)
-
-# --- YEH HAI AAPKA NAYA 3-STEP 'get_shortlink' FUNCTION ---
+# --- 3-Step Shortener (Fixed) ---
 async def get_shortlink(link, grp_id, shortener_level: int):
     settings = await get_settings(grp_id)
     
-    # Decide karein kaunsa shortener use karna hai
     if shortener_level == 3:
         site = settings.get('shortner_three', SHORTENER_WEBSITE3)
         api = settings.get('api_three', SHORTENER_API3)
@@ -301,14 +227,10 @@ async def get_shortlink(link, grp_id, shortener_level: int):
         site = settings.get('shortner', SHORTENER_WEBSITE)
         api = settings.get('api', SHORTENER_API)
 
-    # Agar verify off hai ya admin ne shortener set nahi kiya hai
     if not IS_VERIFY or not api or not site:
         return link
 
-    # Link ko encode karein taaki special characters (?) error na dein
     encoded_link = urllib.parse.quote(link)
-    
-    # Direct API call
     api_url = f"https://{site}/api?api={api}&url={encoded_link}"
     
     try:
@@ -316,8 +238,7 @@ async def get_shortlink(link, grp_id, shortener_level: int):
             async with session.get(api_url) as resp:
                 if resp.status != 200:
                     logger.error(f"Shortener (L{shortener_level}) HTTP Error {resp.status} for {site}")
-                    return link # API fail hui, original link return karo
-                
+                    return link
                 data = await resp.json()
         
         if data.get('status') == 'success':
@@ -325,26 +246,32 @@ async def get_shortlink(link, grp_id, shortener_level: int):
         else:
             error_message = data.get('message', data.get('msg', 'Unknown API error'))
             logger.error(f"Shortener (L{shortener_level}) API Error: {error_message} for {site}")
-            return link # API ne error diya, original link return karo
-            
+            return link
     except Exception as e:
         logger.error(f"Aiohttp error in get_shortlink (L{shortener_level}): {e}")
-        return link # Koi aur error, original link return karo
-# --- 'get_shortlink' FIX KHATAM ---
+        return link
 
+# --- Other Helpers ---
+def get_size(size):
+    units = ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB"]
+    size = float(size)
+    i = 0
+    while size >= 1024.0 and i < len(units):
+        i += 1
+        size /= 1024.0
+    return "%.2f %s" % (size, units[i])
+
+def get_name(name):
+    regex = re.sub(r'@\w+', '', name)
+    return regex
+
+def list_to_str(k):
+    if not k: return "N/A"
+    elif len(k) == 1: return str(k[0])
+    else: return ', '.join(f'{elem}' for elem in k)
 
 def get_file_id(message: "Message") -> Any:
-    # (Yeh function poora waise hi rahega)
-    media_types = (
-        "audio",
-        "document",
-        "photo",
-        "sticker",
-        "animation",
-        "video",
-        "voice",
-        "video_note",
-    )    
+    media_types = ("audio", "document", "photo", "sticker", "animation", "video", "voice", "video_note")    
     if message.media:
         for attr in media_types:
             media = getattr(message, attr, None)
@@ -353,84 +280,57 @@ def get_file_id(message: "Message") -> Any:
                 return media
 
 def get_hash(media_msg: Message) -> str:
-    # (Yeh function poora waise hi rahega)
     media = get_file_id(media_msg)
     return getattr(media, "file_unique_id", "")[:6]
 
 def get_status():
-    # (Yeh function poora waise hi rahega)
     tz = pytz.timezone('Asia/Kolkata')
     hour = datetime.now(tz).time().hour
-    if 5 <= hour < 12:
-        sts = "ɢᴏᴏᴅ ᴍᴏʀɴɪNɢ"
-    elif 12 <= hour < 18:
-        sts = "ɢᴏᴏᴅ ᴀꜰᴛᴇʀɴᴏᴏN"
-    else:
-        sts = "ɢᴏᴏᴅ ᴇᴠᴇNɪNɢ"
+    if 5 <= hour < 12: sts = "ɢᴏᴏᴅ ᴍᴏʀɴɪNɢ"
+    elif 12 <= hour < 18: sts = "ɢᴏᴏᴅ ᴀꜰᴛᴇʀɴᴏᴏN"
+    else: sts = "ɢᴏᴏᴅ ᴇᴠᴇNɪNɢ"
     return sts
 
 async def is_check_admin(bot, chat_id, user_id):
-    # (Yeh function poora waise hi rahega)
     try:
         member = await bot.get_chat_member(chat_id, user_id)
         return member.status in [enums.ChatMemberStatus.ADMINISTRATOR, enums.ChatMemberStatus.OWNER]
     except:
         return False
 
-# --- 'get_seconds' FUNCTION ---
 async def get_seconds(time_string):
     def extract_value_and_unit(ts):
-        value = ""
-        unit = ""
+        value, unit = "", ""
         index = 0
         while index < len(ts) and ts[index].isdigit():
             value += ts[index]
             index += 1
         unit = ts[index:].lstrip()
-        if value:
-            value = int(value)
+        if value: value = int(value)
         return value, unit
 
     value, unit = extract_value_and_unit(time_string)
-    
     unit_lower = unit.lower()
     
-    if unit_lower.startswith('s'): # sec
-        return value
-    elif unit_lower.startswith('min'): # min
-        return value * 60
-    elif unit_lower.startswith('hour'): # hour
-        return value * 3600
-    elif unit_lower.startswith('day'): # day
-        return value * 86400
-    elif unit_lower.startswith('month'): # month
-        return value * 86400 * 30
-    elif unit_lower.startswith('year'): # year
-        return value * 86400 * 365
-    elif value == 0 and unit_lower == "": # Handle "0"
-        return 0
-    else:
-        return 0 # Invalid format
+    if unit_lower.startswith('s'): return value
+    elif unit_lower.startswith('min'): return value * 60
+    elif unit_lower.startswith('hour'): return value * 3600
+    elif unit_lower.startswith('day'): return value * 86400
+    elif unit_lower.startswith('month'): return value * 86400 * 30
+    elif unit_lower.startswith('year'): return value * 86400 * 365
+    elif value == 0 and unit_lower == "": return 0
+    else: return 0
 
-# --- 'get_readable_time' FUNCTION ---
 def get_readable_time(seconds):
-    if seconds == 0:
-        return "0 seconds"
-        
+    if seconds == 0: return "0 seconds"
     periods = [('month', 2592000), ('day', 86400), ('hour', 3600), ('minute', 60), ('second', 1)]
     result_parts = []
-    
     for period_name, period_seconds in periods:
         if seconds >= period_seconds:
             period_value = int(seconds // period_seconds)
             seconds = seconds % period_seconds
-            
-            if period_value > 1:
-                period_name += 's'
-            
+            if period_value > 1: period_name += 's'
             result_parts.append(f"{period_value} {period_name}")
-    
-    if result_parts:
-        return result_parts[0] 
-    
+    if result_parts: return result_parts[0] 
     return "less than a second"
+
