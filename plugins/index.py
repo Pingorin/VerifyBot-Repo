@@ -4,6 +4,7 @@ from pyrogram import Client, filters, enums
 from pyrogram.errors import FloodWait
 from pyrogram.errors.exceptions.bad_request_400 import ChannelInvalid, ChatAdminRequired, UsernameInvalid, UsernameNotModified
 from info import ADMINS, LOG_CHANNEL, CHANNELS
+# ia_filterdb se save_file import hoga (jisme naya logic hai)
 from database.ia_filterdb import save_file 
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from utils import temp, get_readable_time
@@ -28,6 +29,7 @@ async def index_files(bot, query):
             chat = int(chat)
         except:
             chat = chat
+        # index_files_to_db ko call karega
         await index_files_to_db(int(lst_msg_id), chat, msg, bot, int(skip), db_choice)
         
     elif ident == 'cancel':
@@ -71,7 +73,7 @@ async def send_for_index(bot, message):
     except:
         return await message.reply("Number is invalid.")
     
-    # --- NAYA FIX: 4 Database selection buttons ---
+    # 4 DB selection buttons (yeh waise hi rahenge)
     buttons = [[
         InlineKeyboardButton('📥 Index to Primary DB 1', callback_data=f'index#yes#primary#{chat_id}#{last_msg_id}#{skip}')
     ],[
@@ -99,7 +101,7 @@ async def send_for_index(bot, message):
 @Client.on_message(filters.command('channel'))
 async def channel_info(bot, message):
     if message.from_user.id not in ADMINS:
-        await message.reply('ᴏɴʟʏ ᴛʜᴇ ʙᴏᴛ ᴏᴡɴᴇʀ ᴄᴀɴ ᴜsᴇ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ... 😑')
+        await message.reply('ᴏɴʟʏ ᴛʜᴇ ʙᴏᴛ ᴏᴡɴᴇʀ ᴄᴀɴ ᴜsᴇ ᴛʜɪs ᴄᴏᴍᴍᴀND... 😑')
         return
     ids = CHANNELS
     if not ids:
@@ -127,7 +129,8 @@ async def index_files_to_db(lst_msg_id, chat, msg, bot, skip, db_choice):
                 time_taken = get_readable_time(time.time()-start_time)
                 if temp.CANCEL:
                     temp.CANCEL = False
-                    await msg.edit(f"Successfully Cancelled!\nCompleted in {time_taken}\n\nSaved <code>{total_files}</code> files to Database: `{db_choice}`!\nDuplicate Files Skipped: G<code>{duplicate}</code>\nDeleted Messages Skipped: Example: <code>/set_verify_time 12 hours</code>{deleted}</code>\nNon-Media messages skipped: <code>{no_media + unsupported}</code>\nUnsupported Media: <code>{unsupported}</code>\nErrors Occurred: <code>{errors}</code>")
+                    # --- FIX: Broken f-string theek kar di gayi hai ---
+                    await msg.edit(f"Successfully Cancelled!\nCompleted in {time_taken}\n\nSaved <code>{total_files}</code> files to Database: `{db_choice}`!\nDuplicate Files Skipped: <code>{duplicate}</code>\nDeleted Messages Skipped: <code>{deleted}</code>\nNon-Media messages skipped: <code>{no_media + unsupported}</code>\nUnsupported Media: <code>{unsupported}</code>\nErrors Occurred: <code>{errors}</code>")
                     return
                 current += 1
                 if current % 30 == 0:
@@ -154,9 +157,16 @@ async def index_files_to_db(lst_msg_id, chat, msg, bot, skip, db_choice):
                     unsupported += 1
                     continue
                 
+                # --- YEH HAI AAPKA NAYA BADLAAV ---
+                # Hum ab caption ke saath message_id aur channel_id bhi bhej rahe hain
                 media.caption = message.caption
+                media.message_id = message.id      # <-- NAYI LINE
+                media.channel_id = message.chat.id # <-- NAYI LINE
+                # media.file_unique_id media object mein pehle se hota hai
                 
+                # save_file (ia_filterdb.py mein) ab in sabko handle karega
                 sts = await save_file(media, db_choice)
+                # --- BADLAAV KHATAM ---
                 
                 if sts == 'suc':
                     total_files += 1
