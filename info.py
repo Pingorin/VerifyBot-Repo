@@ -40,9 +40,9 @@ DATABASE_NAME = environ.get('DATABASE_NAME', "")
 COLLECTION_NAME = environ.get('COLLECTION_NAME', '')
 
 # --- File Indexing and Streaming ---
-CHANNELS = [int(ch) if id_pattern.search(ch) else ch for ch in environ.get('CHANNELS', '-100...').split()]
-BIN_CHANNEL = int(environ.get('BIN_CHANNEL', '-100...')) # For streaming links
-URL = environ.get('URL', 'my-bot.onrender.com') # Your bot's public URL
+CHANNELS = [int(ch) if id_pattern.search(ch) else ch for ch in environ.get('CHANNELS', '-1002990033841').split()]
+BIN_CHANNEL = int(environ.get('BIN_CHANNEL', '-1003173929836')) # For streaming links
+URL = environ.get('URL', '') # Your bot's public URL
 
 # --- 3-Step Verification System ---
 IS_VERIFY = is_enabled(environ.get('IS_VERIFY', 'True'), True)
@@ -69,19 +69,19 @@ DEFAULT_VERIFY_DURATION = int(environ.get('DEFAULT_VERIFY_DURATION', '86400')) #
 
 # --- Force Subscribe (FSub) Channels (All 4) ---
 # FSub 1 (Request)
-auth_channel = environ.get('AUTH_CHANNEL', '-100...')
+auth_channel = environ.get('AUTH_CHANNEL', '-1003105162989')
 AUTH_CHANNEL = int(auth_channel) if auth_channel and id_pattern.search(auth_channel) else None
 
 # FSub 2 (Request)
-auth_channel_2 = environ.get('AUTH_CHANNEL_2', '-100...')
+auth_channel_2 = environ.get('AUTH_CHANNEL_2', '-1003295790341')
 AUTH_CHANNEL_2 = int(auth_channel_2) if auth_channel_2 and id_pattern.search(auth_channel_2) else None
 
 # FSub 3 (Normal Join)
-auth_channel_3 = environ.get('AUTH_CHANNEL_3', '-100...') 
+auth_channel_3 = environ.get('AUTH_CHANNEL_3', '-1002954499406') 
 AUTH_CHANNEL_3 = int(auth_channel_3) if auth_channel_3 and id_pattern.search(auth_channel_3) else auth_channel_3
 
 # FSub 4 (Request - Post-Verification)
-AUTH_CHANNEL_4 = environ.get('AUTH_CHANNEL_4', '-100...')
+AUTH_CHANNEL_4 = environ.get('AUTH_CHANNEL_4', '-1003210900437')
 AUTH_CHANNEL_4 = int(AUTH_CHANNEL_4) if AUTH_CHANNEL_4 and id_pattern.search(AUTH_CHANNEL_4) else None
 AUTH_CHANNEL_4_TEXT = environ.get('AUTH_CHANNEL_4_TEXT', '✅ Join Backup & Get File')
 
