@@ -1,6 +1,7 @@
 from pyrogram import Client, __version__, filters
 from pyrogram.raw.all import layer
-from database.ia_filterdb import Media
+# --- FIX: Sabhi 4 Media class import karein ---
+from database.ia_filterdb import Media, MediaPrimary, MediaSecondary, MediaThird, MediaFourth
 from database.users_chats_db import db
 from info import API_ID, API_HASH, ADMINS, BOT_TOKEN, LOG_CHANNEL, PORT, SUPPORT_GROUP
 from utils import temp
@@ -11,6 +12,7 @@ from datetime import date, datetime
 import datetime
 import pytz
 from aiohttp import web
+# --- FIX: __init__.py se import karein ---
 from plugins import web_server, check_expired_premium
 import asyncio
 import time
@@ -29,12 +31,18 @@ class Bot(Client):
         
     async def start(self):
         st = time.time()
-        temp.START_TIME = st  # <-- THIS IS THE FIX
+        temp.START_TIME = st
         b_users, b_chats = await db.get_banned()
         temp.BANNED_USERS = b_users
         temp.BANNED_CHATS = b_chats
         await super().start()
-        await Media.ensure_indexes()
+        
+        # --- FIX: Sabhi 4 database ke indexes ko ensure karein ---
+        await MediaPrimary.ensure_indexes()
+        await MediaSecondary.ensure_indexes()
+        await MediaThird.ensure_indexes()
+        await MediaFourth.ensure_indexes()
+        
         me = await self.get_me()
         temp.ME = me.id
         temp.U_NAME = me.username
@@ -68,29 +76,6 @@ class Bot(Client):
         limit: int,
         offset: int = 0,
     ) -> Optional[AsyncGenerator["types.Message", None]]:
-        """Iterate through a chat sequentially.
-        This convenience method does the same as repeatedly calling :meth:`~pyrogram.Client.get_messages` in a loop, thus saving
-        you from the hassle of setting up boilerplate code. It is useful for getting the whole chat messages with a
-        single call.
-        Parameters:
-            chat_id (``int`` | ``str``):
-                Unique identifier (int) or username (str) of the target chat.
-                For your personal cloud (Saved Messages) you can simply use "me" or "self".
-                For a contact that exists in your Telegram address book you can use his phone number (str).
-                
-            limit (``int``):
-                Identifier of the last message to be returned.
-                
-            offset (``int``, *optional*):
-                Identifier of the first message to be returned.
-                Defaults to 0.
-        Returns:
-            ``Generator``: A generator yielding :obj:`~pyrogram.types.Message` objects.
-        Example:
-            .. code-block:: python
-                for message in app.iter_messages("pyrogram", 1, 15000):
-                    print(message.text)
-        """
         current = offset
         while True:
             new_diff = min(200, limit - current)
@@ -101,5 +86,6 @@ class Bot(Client):
                 yield message
                 current += 1
 
-app = Bot()
-app.run()
+if __name__ == "__main__":
+    app = Bot()
+    app.run()
