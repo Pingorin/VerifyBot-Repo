@@ -12,6 +12,8 @@ class script(object):
 ʏᴏᴜʀ ɪᴅ - <code>{}</code></b>"""
     
     HELP_TXT = """<b>ᴄʟɪᴄᴋ ᴏɴ ᴛʜᴇ ʙᴜᴛᴛᴏɴꜱ ʙᴇʟᴏᴡ ᴛᴏ ɢᴇᴛ ᴅᴏᴄᴜᴍᴇɴᴛᴀᴛɪᴏɴ ᴀʙᴏᴜᴛ ꜱᴘᴇᴄɪꜰɪᴄ ᴍᴏᴅᴜʟᴇꜱ..</b>"""
+    NEW_USER_TXT = "New User Started: \nUser: {2}\nID: `{1}`\nBot: {0}"
+    NEW_GROUP_TXT = "New Group Added: \nGroup: {1} (ID: `{2}`)\nUsername: @{3}\nLink: {4}\nTotal Members: {5}\nAdded By: {6}\nBot: {0}"
     
     TELE_TXT = """<b>/telegraph - sᴇɴᴅ ᴍᴇ ᴘɪᴄᴛᴜʀᴇ ᴏʀ ᴠɪᴅᴇᴏ ᴜɴᴅᴇʀ (5ᴍʙ)
 
