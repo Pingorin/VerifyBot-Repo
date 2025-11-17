@@ -10,7 +10,7 @@ from Script import script
 from pyrogram import Client, filters, enums
 # --- ZAROORI IMPORTS (MessageNotModified add kiya gaya hai) ---
 from pyrogram.errors import ChatAdminRequired, FloodWait, UserIsBlocked, PeerIdInvalid, MessageNotModified
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ChatMemberUpdated
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ChatMemberUpdated, CallbackQuery
 # --- NAYA IMPORT (get_file_details ki jagah) ---
 from database.ia_filterdb import Media, get_bad_files, unpack_new_file_id, get_file_data_by_link_id
 from database.users_chats_db import db
