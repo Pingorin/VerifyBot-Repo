@@ -1,9 +1,9 @@
 from pyrogram import Client, __version__, filters
 from pyrogram.raw.all import layer
-# --- YEH BADLAAV HAI ---
-# Sabhi 5 database models ko import karein
+# --- FIX: Sabhi 4 Media class + FilesData import karein ---
 from database.ia_filterdb import (
-    Media, FilesData, MediaPrimary, MediaSecondary, MediaThird, MediaFourth
+    Media, MediaPrimary, MediaSecondary, MediaThird, MediaFourth, 
+    FilesData # <-- Master list ko bhi import karein
 )
 from database.users_chats_db import db
 from info import API_ID, API_HASH, ADMINS, BOT_TOKEN, LOG_CHANNEL, PORT, SUPPORT_GROUP
@@ -15,6 +15,7 @@ from datetime import date, datetime
 import datetime
 import pytz
 from aiohttp import web
+# --- FIX: __init__.py se import karein ---
 from plugins import web_server, check_expired_premium
 import asyncio
 import time
@@ -39,25 +40,29 @@ class Bot(Client):
         temp.BANNED_CHATS = b_chats
         await super().start()
         
-        # --- YEH BADLAAV HAI ---
-        # Aapke naye 2-collection system ke liye sabhi indexes ko ensure karein
-        try:
-            await FilesData.ensure_indexes()
-            await MediaPrimary.ensure_indexes()
-            await MediaSecondary.ensure_indexes() # 'Media' is alias for this
-            await MediaThird.ensure_indexes()
-            await MediaFourth.ensure_indexes()
-            print("Successfully ensured all 5 database indexes.")
-        except Exception as e:
-            print(f"Database index ensure karte waqt error: {e}")
-        # --- BADLAAV KHATAM ---
-            
+        # --- Sabhi database ke indexes ko ensure karein ---
+        await FilesData.ensure_indexes() # Master list
+        await MediaPrimary.ensure_indexes()
+        await MediaSecondary.ensure_indexes()
+        await MediaThird.ensure_indexes()
+        await MediaFourth.ensure_indexes()
+        
         me = await self.get_me()
         temp.ME = me.id
-        temp.U_NAME = me.username
         temp.B_NAME = me.first_name
         temp.B_LINK = me.mention
-        self.username = '@' + me.username
+        
+        # --- YEH HAI FIX ---
+        # Agar bot ka username nahi hai, toh ID ka istemaal karein
+        if me.username:
+            temp.U_NAME = me.username
+            self.username = '@' + me.username
+        else:
+            # Fallback (agar username nahi hai)
+            temp.U_NAME = str(me.id) # ID ko string mein convert karein
+            self.username = me.mention # Mention (tg://user?id=...) ka istemaal karein
+        # --- FIX KHATAM ---
+
         self.loop.create_task(check_expired_premium(self))
         print(f"{me.first_name} is started now ❤️")
         tz = pytz.timezone('Asia/Kolkata')
@@ -69,11 +74,11 @@ class Bot(Client):
         bind_address = "0.0.0.0"
         await web.TCPSite(app, bind_address, PORT).start()
         await self.send_message(chat_id=LOG_CHANNEL, text=f"<b>{me.mention} ʀᴇsᴛᴀʀᴛᴇᴅ 🤖\n\n📆 ᴅᴀᴛᴇ - <code>{today}</code>\n🕙 ᴛɪᴍᴇ - <code>{timee}</code>\n🌍 ᴛɪᴍᴇ ᴢᴏɴᴇ - <code>Asia/Kolkata</code></b>")
-        await self.send_message(chat_id=SUPPORT_GROUP, text=f"<b>{me.mention} ʀᴇsᴛᴀʀᴛᴇD 🤖</b>")
+        await self.send_message(chat_id=SUPPORT_GROUP, text=f"<b>{me.mention} ʀᴇsᴛᴀʀᴛᴇᴅ 🤖</b>")
         tt = time.time() - st
         seconds = int(datetime.timedelta(seconds=tt).seconds)
         for admin in ADMINS:
-            await self.send_message(chat_id=admin, text=f"<b>✅ ʙᴏᴛ ʀᴇsᴛᴀʀᴛᴇᴅ\n🕥 ᴛɪᴍᴇ ᴛᴀᴋᴇN - <code>{seconds} sᴇᴄᴏɴᴅs</code></b>")
+            await self.send_message(chat_id=admin, text=f"<b>✅ ʙᴏᴛ ʀᴇsᴛᴀʀᴛᴇᴅ\n🕥 ᴛɪᴍᴇ ᴛᴀᴋᴇɴ - <code>{seconds} sᴇᴄᴏɴᴅs</code></b>")
 
     async def stop(self, *args):
         await super().stop()
@@ -85,7 +90,7 @@ class Bot(Client):
         limit: int,
         offset: int = 0,
     ) -> Optional[AsyncGenerator["types.Message", None]]:
-        """Iterate through a chat sequentially... (Poora function waise hi rahega)"""
+        # ... (Yeh function waise hi rahega) ...
         current = offset
         while True:
             new_diff = min(200, limit - current)
@@ -96,5 +101,6 @@ class Bot(Client):
                 yield message
                 current += 1
 
-app = Bot()
-app.run()
+if __name__ == "__main__":
+    app = Bot()
+    app.run()
